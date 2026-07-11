@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+build/
+dist/
+*.spec
+*.ttf
+*.mp4
+*.mp3
+*.wav

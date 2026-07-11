@@ -1,0 +1,6 @@
+PyQt6
+moviepy>=1.0.3,<2.0.0
+Pillow
+numpy
+pyinstaller
+yt-dlp

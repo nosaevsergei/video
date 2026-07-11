@@ -1,0 +1,61 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Build Standalone Executable
+      run: |
+        python build_exe.py
+
+    - name: Verify build artifact
+      run: |
+        if (Test-Path "dist/RankingVideoGenerator.exe") {
+          Write-Host "Success: Standalone executable created."
+        } else {
+          Write-Error "Failure: Standalone executable was not found!"
+          exit 1
+        }
+      shell: powershell
+
+    - name: Upload Build Artifact to Actions
+      uses: actions/upload-artifact@v4
+      with:
+        name: RankingVideoGenerator-EXE
+        path: dist/RankingVideoGenerator.exe
+
+    - name: Create GitHub Release and Upload EXE
+      uses: softprops/action-gh-release@v2
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: dist/RankingVideoGenerator.exe
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
