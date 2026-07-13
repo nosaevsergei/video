@@ -175,7 +175,10 @@ def make_overlay_filter(title, ranking_lines, current_rank_index, title_font, ra
 
         # Draw Cumulative Ranking List (X and Y from settings)
         for idx, (rank_num, name) in enumerate(ranking_lines):
-            line_text = f"{rank_num}. {name}"
+            if name.strip():
+                line_text = f"{rank_num}. {name.strip()}"
+            else:
+                line_text = f"{rank_num}."
             is_current = (rank_num == current_rank_index)
             # Highlight current playing rank with gold/yellow, rest in white
             fill_color = (255, 223, 0) if is_current else (255, 255, 255)
@@ -270,6 +273,10 @@ class VideoGeneratorWorker(QThread):
                         'outtmpl': os.path.join(temp_dir, f'download_rank_{rank}_%(epoch)s.%(ext)s'),
                         'quiet': True,
                         'no_warnings': True,
+                        'socket_timeout': 60,
+                        'retries': 10,
+                        'fragment_retries': 10,
+                        'nocheckcertificate': True,
                     }
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                         info = ydl.extract_info(url, download=True)
@@ -704,7 +711,7 @@ class MainWindow(QMainWindow):
             # 1. Rank name input
             slot_layout.addWidget(QLabel("Rank Name:"), 0, 0)
             name_edit = QLineEdit()
-            name_edit.setPlaceholderText(f"Display name for Rank {i} (e.g. Diamond Ore)")
+            name_edit.setPlaceholderText(f"Display name for Rank {i} (Optional, e.g. Diamond Ore)")
             slot_layout.addWidget(name_edit, 0, 1, 1, 2)
 
             # 2. Local File input
@@ -884,10 +891,6 @@ class MainWindow(QMainWindow):
 
             if path and not url and not os.path.exists(path):
                 QMessageBox.warning(self, "Validation Error", f"Local video file for Rank {rank} does not exist:\n{path}")
-                return False
-
-            if not name:
-                QMessageBox.warning(self, "Validation Error", f"Name label is required for Rank {rank}.")
                 return False
 
         # 3. Audio (if provided)
